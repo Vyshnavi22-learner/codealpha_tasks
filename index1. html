@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Image Gallery</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: linear-gradient(to right, #f9f9f9, #eaf6ff);
+      text-align: center;
+    }
+
+    h1 {
+      background: linear-gradient(to right, #00c6ff, #0072ff);
+      color: white;
+      padding: 20px;
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: 1px;
+      text-shadow: 1px 1px 2px #444;
+    }
+
+    .buttons {
+      margin: 15px;
+    }
+
+    .buttons button {
+      margin: 5px;
+      padding: 12px 25px;
+      background: linear-gradient(to right, #ff5f6d, #ffc371);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: all 0.3s ease;
+    }
+
+    .buttons button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #ff8c42;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      padding: 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .gallery img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 15px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .gallery img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px #5fbdff;
+    }
+
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(circle at center, rgba(0,0,0,0.85), rgba(0,0,0,0.95));
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 1000;
+    }
+
+    .lightbox img {
+      max-width: 90%;
+      max-height: 80%;
+      border-radius: 10px;
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .lightbox span {
+      color: white;
+      font-size: 2rem;
+      position: absolute;
+      top: 30px;
+      right: 40px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .nav-btn {
+      color: #00d2ff;
+      font-size: 3rem;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      user-select: none;
+      text-shadow: 0 0 10px #00d2ff;
+    }
+
+    .prev { left: 20px; }
+    .next { right: 20px; }
+
+    @media (max-width: 600px) {
+      .gallery img { height: 150px; }
+      .nav-btn { font-size: 2rem; }
+    }
+
+    @keyframes zoomIn {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .zoom-effect {
+      animation: zoomIn 0.4s ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+<h1> Image Gallery</h1>
+
+<div class="buttons">
+  <button onclick="filter('all')">Show All</button>
+  <button onclick="filter('people')">People</button>
+  <button onclick="filter('animals')">Animals</button>
+  <button onclick="filter('food')">Food</button>
+  <button onclick="filter('nature')">Nature</button>
+</div>
+
+<div class="gallery" id="gallery"></div>
+
+<div class="lightbox" id="lightbox">
+  <span onclick="closeLightbox()">❌</span>
+  <div class="nav-btn prev" onclick="navigate(-1)">⏮️</div>
+  <img id="lightbox-img" src="">
+  <div class="nav-btn next" onclick="navigate(1)">⏭️</div>
+</div>
+
+<script>
+  const images = {
+    people: [
+      'https://greenwoodhigh.edu.in/wp-content/uploads/2024/01/Mahatma-Gandhi_studio_1931-820x1024.jpeg',
+      'https://im.hunt.in/cg/iol/about/personalities/freedom-fighters/bhagat-singh.jpg',
+      'https://blog.eduplusnow.com/blog/wp-content/uploads/2024/01/WWS_Sarojini_Naidu.jpeg',
+      'https://internationalschoolguwahati.com/wp-content/uploads/2023/07/Jawaharlal-Nehru.jpg',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0NCJzXfz7mCNPksDEeB7Md--LemexYCwlvQ&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQjDa2n3-7kysnLymEgEVBOdnJZFHaKIEPF6g&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSgxcnM7R4QWeUdLCzxzTQFXN6HbRxspZkYnQ&s',
+      'https://i.pinimg.com/474x/8b/2e/89/8b2e893393e0b898112e5201aa775b19.jpg'
+    ],
+    animals: [
+      'https://www.colchesterzoologicalsociety.com/wp-content/uploads/2024/09/Tiger-600x380.jpg',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwXtGylqVkv44emk7qf68nt7rznuhRU12TBw&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfjgAyZuaIUCQQY-l1XYiwYvSFyANGieRwPg&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTd4qPNncC2VCeezvqlW3WnTZOL4Mjmz5onnQ&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQewL19mDQIuwUrs0cJ0WxFocIJN9uXdhacvA&s',
+      'https://static.toiimg.com/photo/imgsize-161580,msid-96352420/96352420.jpg',
+      'https://d1jyxxz9imt9yb.cloudfront.net/medialib/3628/image/s768x1300/Rhinocerous0002_reduced.jpg',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSnyZv-LyFlhWDFNQeM-JubGucPhIha3PKB-w&s'
+    ],
+    food: [
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSiubMYRUyjf1CTtydSNKlHSl2Zwn8CUgCk9g&s',
+      'https://blog.swiggy.com/wp-content/uploads/2024/02/Masala-Dosa-1024x538.jpg',
+      'https://b.zmtcdn.com/data/pictures/chains/9/19136059/7c49ac854bb5286368e64e57e25d19a2.jpg',
+      'https://images.herzindagi.info/image/2021/Sep/chaii-samosa.jpg',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRjonQjvQ82IcRhmMhNgHDMZNn7ENvgVgwhgg&s',
+      'https://www.tiffinboxmess.com/assets/media/category/breakfast.jpeg',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdrtTmgN4p0sTKdpAJNDxj6qIv1UKsq-3DdQ&s',
+      'https://i.ytimg.com/vi/7YzvS6qWv3M/maxresdefault.jpg'
+    ],
+    nature: [
+      'https://gosharpener.com/content/uploads/photos/2024/09/sngine_049cc2e2c71a11e133a4d0921f515a83.webp',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQHU8eOt_zTrtdS83rjNhNWgBDP8Yhl19rE0A&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTtS5VKxQV8A6BvC0gdCGFSSZ4Z9PcKPwi9w&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZqVnqTky7gZtpfo37mMoKiS7i3vjFp9MvWA&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ-1_ZQcB-sbviIOx8B0Tw3eUHQDfYHalgbvg&s',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3-QNOyf5RdRcs0evusEFpz2SwuRlQ8Nhmiw&s',
+      'https://c0.wallpaperflare.com/preview/853/319/641/flower-nature-summer-plant.jpg',
+      'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6fobKqzyKJ53smXQId9FjD4iK7UuvujF2ZA&s'
+    ]
+  };
+
+  let currentCategory = 'all';
+  let currentImages = [];
+  let currentIndex = 0;
+
+  function filter(category) {
+    currentCategory = category;
+    const gallery = document.getElementById('gallery');
+    gallery.innerHTML = '';
+    currentImages = [];
+
+    for (const key in images) {
+      if (category === 'all' || category === key) {
+        images[key].forEach((url) => {
+          const img = document.createElement('img');
+          img.src = url;
+          img.classList.add(key);
+          const realIndex = currentImages.length;
+          currentImages.push(url);
+          img.onclick = () => openLightbox(realIndex);
+          gallery.appendChild(img);
+        });
+      }
+    }
+  }
+
+  function openLightbox(index) {
+    currentIndex = index;
+    const lightbox = document.getElementById('lightbox');
+    const img = document.getElementById('lightbox-img');
+
+    img.classList.remove('zoom-effect');
+    img.onload = () => {
+      img.classList.add('zoom-effect');
+    };
+    img.src = currentImages[index];
+    lightbox.style.display = 'flex';
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').style.display = 'none';
+  }
+
+  function navigate(direction) {
+    currentIndex += direction;
+    if (currentIndex < 0) currentIndex = currentImages.length - 1;
+    if (currentIndex >= currentImages.length) currentIndex = 0;
+    openLightbox(currentIndex);
+  }
+
+  filter('all');
+</script>
+
+</body>
+</html>
